@@ -51,7 +51,6 @@ argocd context cd.argoproj.io --delete`,
 				return
 			}
 
-			// Handle listing contexts when no arguments are provided
 			if len(args) == 0 {
 				printArgoCDContexts(clientOpts.ConfigPath)
 				return
@@ -97,12 +96,10 @@ argocd context cd.argoproj.io --delete`,
 		},
 	}
 
-	// Add subcommands to the main command
 	command.AddCommand(listCommand)
 	command.AddCommand(useCommand)
 	command.AddCommand(deleteCommand)
 
-	// Add the delete flag for backward compatibility
 	command.Flags().BoolVar(&deleteFlag, "delete", false, "Delete the context instead of switching to it")
 
 	return command
@@ -121,7 +118,6 @@ func useArgoCDContext(ctxName string, configPath string) error {
 	}
 	prevCtxFile := path.Join(argoCDDir, ".prev-ctx")
 
-	// Handle "-" for previous context
 	if ctxName == "-" {
 		prevCtxBytes, err := os.ReadFile(prevCtxFile)
 		if err != nil {
@@ -142,7 +138,6 @@ func useArgoCDContext(ctxName string, configPath string) error {
 	prevCtx := localCfg.CurrentContext
 	localCfg.CurrentContext = ctxName
 
-	// Write the updated config and previous context
 	if err := localconfig.WriteLocalConfig(*localCfg, configPath); err != nil {
 		return err
 	}
