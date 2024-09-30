@@ -72,6 +72,8 @@ data:
   # Diff calculation will be done by running a server side apply dryrun (when
   # diff cache is unavailable).
   controller.diff.server.side: "false"
+  # Enables profile endpoint on the internal metrics port
+  controller.profile.enabled: "false"
 
   ## Server properties
   # Listen on given address for incoming connections (default "0.0.0.0")
@@ -136,6 +138,8 @@ data:
   server.default.cache.expiration: "24h0m0s"
   # Enable the experimental proxy extension feature
   server.enable.proxy.extension: "false"
+  # Enables profile endpoint on the internal metrics port
+  server.profile.enabled: "false"
 
   ## Repo-server properties
   # Listen on given address for incoming connections (default "0.0.0.0")
@@ -167,6 +171,8 @@ data:
   reposerver.max.combined.directory.manifests.size: '10M'
   # Paths to be excluded from the tarball streamed to plugins. Separate with ;
   reposerver.plugin.tar.exclusions: ""
+  # Enable the repo server to use the 'argocd.argoproj.io/manifest-generate-paths' annotation to guide manifest generation.
+  reposerver.plugin.use.manifest.generate.paths: "false"
   # Allow repositories to contain symlinks that leave the boundaries of the repository.
   # Changing this to "true" will not allow _all_ out-of-bounds symlinks. Those will still be blocked for things like values
   # files in Helm charts. But symlinks which are not explicitly blocked by other checks will be allowed.
@@ -184,6 +190,11 @@ data:
   # Include hidden directories from Git
   reposerver.include.hidden.directories: "false"
 
+
+  # Set the logging format. One of: text|json (default "text")
+  dexserver.log.format: "text"
+  # Set the logging level. One of: debug|info|warn|error (default "info")
+  dexserver.log.level: "info"
   # Disable TLS on the HTTP endpoint
   dexserver.disable.tls: "false"
 
@@ -200,6 +211,11 @@ data:
   # (i.e. the spec.syncPlicy.applicationSync field). Set it to "true" to allow overrides. "" or "false" will disable
   # overrides. (default "")
   applicationsetcontroller.enable.policy.override: ""
+  # Max concurrent reconciliation limit for the controller (default 10)
+  applicationsetcontroller.concurrent.reconciliations.max: "10"
+  # Enable new globbing in Git files generator (default "false")
+  # See https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Git-File-Globbing/
+  applicationsetcontroller.enable.new.git.file.globbing: "false"
   # Print debug logs. Takes precedence over loglevel
   applicationsetcontroller.debug: "false"
   # Set the logging format. One of: text|json (default "text")
@@ -233,3 +249,5 @@ data:
   notificationscontroller.log.format: "text"
   # Enable self-service notifications config. Used in conjunction with apps-in-any-namespace. (default "false")
   notificationscontroller.selfservice.enabled: "false"
+  # Disable TLS on connections to repo server
+  notificationscontroller.repo.server.plaintext: "false"
