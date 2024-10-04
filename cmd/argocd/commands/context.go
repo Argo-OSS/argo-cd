@@ -33,6 +33,9 @@ argocd context use cd.argoproj.io
 # Delete Argo CD context
 argocd context delete cd.argoproj.io
 
+# Get Argocd CD context details
+argocd context get cd.argoproj.io
+
 # Switch Argo CD context (legacy)
 argocd context cd.argoproj.io
 
@@ -96,9 +99,22 @@ argocd context cd.argoproj.io --delete`,
 		},
 	}
 
+	// Get context details
+	getDetailsCommand := &cobra.Command{
+		Use:   "get [CONTEXT]",
+		Short: "Get a specific Argo CD context details",
+		Args:  cobra.ExactArgs(1),
+		Run: func(c *cobra.Command, args []string) {
+			ctxName := args[0]
+
+			getContextDetails(ctxName, clientOpts.ConfigPath)
+		},
+	}
+
 	command.AddCommand(listCommand)
 	command.AddCommand(useCommand)
 	command.AddCommand(deleteCommand)
+	command.AddCommand(getDetailsCommand)
 
 	command.Flags().BoolVar(&deleteFlag, "delete", false, "Delete the context instead of switching to it")
 
@@ -205,4 +221,36 @@ func printArgoCDContexts(configPath string) {
 		_, err = fmt.Fprintf(w, "%s\t%s\t%s\n", prefix, context.Name, context.Server.Server)
 		errors.CheckError(err)
 	}
+}
+
+func getContextDetails(context, configPath string) {
+	localCfg, err := localconfig.ReadLocalConfig(configPath)
+	if err != nil {
+		errors.CheckError(err)
+	}
+
+	if localCfg == nil {
+		log.Fatalf("No contexts defined in %s", configPath)
+	}
+
+	ctx, err := localCfg.ResolveContext(context)
+	errors.CheckError(err)
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	defer func() { _ = w.Flush() }()
+
+	writeAndCheck(w, "- SERVERS\n")
+	writeAndCheck(w, "grpc-web-root-path:\t%s\n", ctx.Server.GRPCWebRootPath)
+	writeAndCheck(w, "plain-text:\t%v\n", ctx.Server.PlainText)
+	writeAndCheck(w, "server:\t%s\n\n", ctx.Server.Server)
+
+	writeAndCheck(w, "- USERS\n")
+	writeAndCheck(w, "name:\t%s\n", ctx.User.Name)
+	writeAndCheck(w, "auth-token:\t%s\n", ctx.User.AuthToken)
+}
+
+// 에러 처리용 함수
+func writeAndCheck(w *tabwriter.Writer, format string, args ...interface{}) {
+	_, err := fmt.Fprintf(w, format, args...)
+	errors.CheckError(err)
 }
