@@ -249,7 +249,6 @@ func getContextDetails(context, configPath string) {
 	writeAndCheck(w, "auth-token:\t%s\n", ctx.User.AuthToken)
 }
 
-// 에러 처리용 함수
 func writeAndCheck(w *tabwriter.Writer, format string, args ...interface{}) {
 	_, err := fmt.Fprintf(w, format, args...)
 	errors.CheckError(err)
