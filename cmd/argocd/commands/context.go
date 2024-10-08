@@ -62,17 +62,30 @@ argocd context cd.argoproj.io --delete`,
 		},
 	}
 
-	// List subcommand
-	listCommand := &cobra.Command{
+	// Add subcommands to the main command
+	command.AddCommand(newListCommand(clientOpts))
+	command.AddCommand(newUseCommand(clientOpts))
+	command.AddCommand(newDeleteCommand(clientOpts))
+
+	command.Flags().BoolVar(&deleteFlag, "delete", false, "Delete the context instead of switching to it")
+
+	return command
+}
+
+// Function to create the list command
+func newListCommand(clientOpts *argocdclient.ClientOptions) *cobra.Command {
+	return &cobra.Command{
 		Use:   "list",
 		Short: "List Argo CD contexts",
 		Run: func(c *cobra.Command, args []string) {
 			printArgoCDContexts(clientOpts.ConfigPath)
 		},
 	}
+}
 
-	// Use subcommand to switch context
-	useCommand := &cobra.Command{
+// Function to create the use command
+func newUseCommand(clientOpts *argocdclient.ClientOptions) *cobra.Command {
+	return &cobra.Command{
 		Use:   "use [CONTEXT]",
 		Short: "Switch to a specific Argo CD context",
 		Args:  cobra.ExactArgs(1), // context argument is required
@@ -81,9 +94,11 @@ argocd context cd.argoproj.io --delete`,
 			errors.CheckError(err)
 		},
 	}
+}
 
-	// Delete subcommand to remove context
-	deleteCommand := &cobra.Command{
+// Function to create the delete command
+func newDeleteCommand(clientOpts *argocdclient.ClientOptions) *cobra.Command {
+	return &cobra.Command{
 		Use:   "delete [CONTEXT]",
 		Short: "Delete a specific Argo CD context",
 		Args:  cobra.ExactArgs(1), // context argument is required
@@ -95,14 +110,6 @@ argocd context cd.argoproj.io --delete`,
 			fmt.Printf("Deleted context '%s'\n", ctxName)
 		},
 	}
-
-	command.AddCommand(listCommand)
-	command.AddCommand(useCommand)
-	command.AddCommand(deleteCommand)
-
-	command.Flags().BoolVar(&deleteFlag, "delete", false, "Delete the context instead of switching to it")
-
-	return command
 }
 
 // Refactored logic for switching Argo CD context
