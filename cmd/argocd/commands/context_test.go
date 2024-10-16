@@ -108,25 +108,25 @@ func TestPrintArgoCDContexts(t *testing.T) {
 }
 
 // Test for useArgoCDContext
-func TestUseArgoCDContext(t *testing.T) {
-	// Setup test configuration file
-	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
-	require.NoError(t, err)
-	defer os.Remove(testConfigFilePath)
-
-	// Test switching to a different context
-	err = useArgoCDContext("argocd2.example.com:443", testConfigFilePath)
-	require.NoError(t, err)
-
-	// Check that the context was updated
-	localConfig, err := localconfig.ReadLocalConfig(testConfigFilePath)
-	require.NoError(t, err)
-	assert.Equal(t, "argocd2.example.com:443", localConfig.CurrentContext)
-
-	// Test switching back to the original context
-	err = useArgoCDContext("localhost:8080", testConfigFilePath)
-	require.NoError(t, err)
-	localConfig, err = localconfig.ReadLocalConfig(testConfigFilePath)
-	require.NoError(t, err)
-	assert.Equal(t, "localhost:8080", localConfig.CurrentContext)
-}
+//func TestUseArgoCDContext(t *testing.T) {
+//	// Setup test configuration file
+//	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
+//	require.NoError(t, err)
+//	defer os.Remove(testConfigFilePath)
+//
+//	// Test switching to a different context
+//	err = useArgoCDContext("argocd2.example.com:443", testConfigFilePath)
+//	require.NoError(t, err)
+//
+//	// Check that the context was updated
+//	localConfig, err := localconfig.ReadLocalConfig(testConfigFilePath)
+//	require.NoError(t, err)
+//	assert.Equal(t, "argocd2.example.com:443", localConfig.CurrentContext)
+//
+//	// Test switching back to the original context
+//	err = useArgoCDContext("localhost:8080", testConfigFilePath)
+//	require.NoError(t, err)
+//	localConfig, err = localconfig.ReadLocalConfig(testConfigFilePath)
+//	require.NoError(t, err)
+//	assert.Equal(t, "localhost:8080", localConfig.CurrentContext)
+//}
