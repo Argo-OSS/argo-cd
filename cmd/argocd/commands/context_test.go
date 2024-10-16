@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
@@ -75,4 +76,33 @@ func TestContextDelete(t *testing.T) {
 	assert.NotContains(t, localConfig.Servers, localconfig.Server{PlainText: true, Server: "localhost:8080"})
 	assert.NotContains(t, localConfig.Users, localconfig.User{AuthToken: "vErrYS3c3tReFRe$hToken", Name: "localhost:8080"})
 	assert.Contains(t, localConfig.Contexts, localconfig.ContextRef{Name: "argocd2.example.com:443", Server: "argocd2.example.com:443", User: "argocd2.example.com:443"})
+}
+
+func TestPrintArgoCDContexts(t *testing.T) {
+	// Setup test configuration file
+	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
+	require.NoError(t, err)
+	defer os.Remove(testConfigFilePath)
+
+	// Redirect os.Stdout to capture the output
+	var buf bytes.Buffer
+	origStdout := os.Stdout
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = w
+
+	// Run printArgoCDContexts
+	printArgoCDContexts(testConfigFilePath)
+
+	// Restore os.Stdout and read the output
+	w.Close()
+	os.Stdout = origStdout
+	_, err = buf.ReadFrom(r)
+	require.NoError(t, err)
+
+	output := buf.String()
+	assert.Contains(t, output, "CURRENT\tNAME\tSERVER")
+	assert.Contains(t, output, "*\tlocalhost:8080\tlocalhost:8080")
+	assert.Contains(t, output, "\targocd1.example.com:443\targocd1.example.com:443")
+	assert.Contains(t, output, "\targocd2.example.com:443\targocd2.example.com:443")
 }
