@@ -208,23 +208,23 @@ func printArgoCDContexts(configPath string) {
 	}
 }
 
-//func NewContextLoginCommand(clientOpts *argocdclient.ClientOptions) *cobra.Command {
-//	command := &cobra.Command{
-//		Use:   "login SERVER",
-//		Short: "Log in to Argo CD",
-//		Long:  "Log in to Argo CD",
-//		Example: `# Login to Argo CD using a username and password
-//argocd login cd.argoproj.io
-//
-//# Login to Argo CD using SSO
-//argocd login cd.argoproj.io --sso
-//
-//# Configure direct access using Kubernetes API server
-//argocd login cd.argoproj.io --core`,
-//		Run: func(c *cobra.Command, args []string) {
-//			//ctx := c.Context()
-//		},
-//	}
-//
-//	return command
-//}
+func NewContextLoginCommand(clientOpts *argocdclient.ClientOptions) *cobra.Command {
+	command := &cobra.Command{
+		Use:   "login SERVER",
+		Short: "Log in to Argo CD",
+		Long:  "Log in to Argo CD",
+		Example: `# Login to Argo CD using a username and password
+argocd login cd.argoproj.io
+
+# Login to Argo CD using SSO
+argocd login cd.argoproj.io --sso
+
+# Configure direct access using Kubernetes API server
+argocd login cd.argoproj.io --core`,
+		Run: func(c *cobra.Command, args []string) {
+			//ctx := c.Context()
+		},
+	}
+
+	return command
+}
