@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bytes"
 	"os"
 	"testing"
 
@@ -78,55 +77,49 @@ func TestContextDelete(t *testing.T) {
 	assert.Contains(t, localConfig.Contexts, localconfig.ContextRef{Name: "argocd2.example.com:443", Server: "argocd2.example.com:443", User: "argocd2.example.com:443"})
 }
 
-func TestPrintArgoCDContexts(t *testing.T) {
+func Test_PrintArgocdContexts(t *testing.T) {
+	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
+	require.NoError(t, err)
+	defer os.Remove(testConfigFilePath)
+	err = os.Chmod(testConfigFilePath, 0o600)
+	require.NoError(t, err, "Could not change the file permission to 0600 %v", err)
+
+	str, err := captureOutput(func() error {
+		printArgoCDContexts(testConfigFilePath)
+		return nil
+	})
+	require.NoError(t, err)
+
+	expectedOutput := `CURRENT  NAME                     SERVER
+         argocd1.example.com:443  argocd1.example.com:443
+         argocd2.example.com:443  argocd2.example.com:443
+*        localhost:8080           localhost:8080
+`
+	assert.Equal(t, expectedOutput, str)
+}
+
+// Test for useArgoCDContext
+func TestUseArgoCDContext(t *testing.T) {
 	// Setup test configuration file
 	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
 	require.NoError(t, err)
 	defer os.Remove(testConfigFilePath)
+	err = os.Chmod(testConfigFilePath, 0o600)
+	require.NoError(t, err, "Could not change the file permission to 0600 %v", err)
 
-	// Redirect os.Stdout to capture the output
-	var buf bytes.Buffer
-	origStdout := os.Stdout
-	r, w, err := os.Pipe()
-	require.NoError(t, err)
-	os.Stdout = w
-
-	// Run printArgoCDContexts
-	printArgoCDContexts(testConfigFilePath)
-
-	// Restore os.Stdout and read the output
-	w.Close()
-	os.Stdout = origStdout
-	_, err = buf.ReadFrom(r)
+	// Test switching to a different context
+	err = useArgoCDContext("argocd2.example.com:443", testConfigFilePath)
 	require.NoError(t, err)
 
-	output := buf.String()
-	assert.Contains(t, output, "CURRENT\tNAME\tSERVER")
-	assert.Contains(t, output, "*\tlocalhost:8080\tlocalhost:8080")
-	assert.Contains(t, output, "\targocd1.example.com:443\targocd1.example.com:443")
-	assert.Contains(t, output, "\targocd2.example.com:443\targocd2.example.com:443")
+	// Check that the context was updated
+	localConfig, err := localconfig.ReadLocalConfig(testConfigFilePath)
+	require.NoError(t, err)
+	assert.Equal(t, "argocd2.example.com:443", localConfig.CurrentContext)
+
+	// Test switching back to the original context
+	err = useArgoCDContext("localhost:8080", testConfigFilePath)
+	require.NoError(t, err)
+	localConfig, err = localconfig.ReadLocalConfig(testConfigFilePath)
+	require.NoError(t, err)
+	assert.Equal(t, "localhost:8080", localConfig.CurrentContext)
 }
-
-// Test for useArgoCDContext
-//func TestUseArgoCDContext(t *testing.T) {
-//	// Setup test configuration file
-//	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
-//	require.NoError(t, err)
-//	defer os.Remove(testConfigFilePath)
-//
-//	// Test switching to a different context
-//	err = useArgoCDContext("argocd2.example.com:443", testConfigFilePath)
-//	require.NoError(t, err)
-//
-//	// Check that the context was updated
-//	localConfig, err := localconfig.ReadLocalConfig(testConfigFilePath)
-//	require.NoError(t, err)
-//	assert.Equal(t, "argocd2.example.com:443", localConfig.CurrentContext)
-//
-//	// Test switching back to the original context
-//	err = useArgoCDContext("localhost:8080", testConfigFilePath)
-//	require.NoError(t, err)
-//	localConfig, err = localconfig.ReadLocalConfig(testConfigFilePath)
-//	require.NoError(t, err)
-//	assert.Equal(t, "localhost:8080", localConfig.CurrentContext)
-//}
