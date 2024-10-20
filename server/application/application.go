@@ -510,6 +510,10 @@ func (s *Server) GetManifests(ctx context.Context, q *application.ApplicationMan
 			if err != nil {
 				return fmt.Errorf("error getting kustomize settings options: %w", err)
 			}
+			installationID, err := s.settingsMgr.GetInstallationID()
+			if err != nil {
+				return fmt.Errorf("error getting installation ID: %w", err)
+			}
 
 			manifestInfo, err := client.GenerateManifest(ctx, &apiclient.ManifestRequest{
 				Repo:                            repo,
@@ -531,6 +535,7 @@ func (s *Server) GetManifests(ctx context.Context, q *application.ApplicationMan
 				HasMultipleSources:              a.Spec.HasMultipleSources(),
 				RefSources:                      refSources,
 				AnnotationManifestGeneratePaths: a.GetAnnotation(v1alpha1.AnnotationKeyManifestGeneratePaths),
+				InstallationID:                  installationID,
 			})
 			if err != nil {
 				return fmt.Errorf("error generating manifests: %w", err)
@@ -926,8 +931,8 @@ func (s *Server) updateApp(app *appv1.Application, newApp *appv1.Application, ct
 	for i := 0; i < 10; i++ {
 		app.Spec = newApp.Spec
 		if merge {
-			app.Labels = collections.MergeStringMaps(app.Labels, newApp.Labels)
-			app.Annotations = collections.MergeStringMaps(app.Annotations, newApp.Annotations)
+			app.Labels = collections.Merge(app.Labels, newApp.Labels)
+			app.Annotations = collections.Merge(app.Annotations, newApp.Annotations)
 		} else {
 			app.Labels = newApp.Labels
 			app.Annotations = newApp.Annotations
@@ -1284,7 +1289,11 @@ func (s *Server) getApplicationClusterConfig(ctx context.Context, a *appv1.Appli
 	if err != nil {
 		return nil, fmt.Errorf("error getting cluster: %w", err)
 	}
-	config := clst.RESTConfig()
+	config, err := clst.RESTConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error getting cluster REST config: %w", err)
+	}
+
 	return config, err
 }
 
@@ -1889,7 +1898,11 @@ func (s *Server) Sync(ctx context.Context, syncReq *application.ApplicationSyncR
 
 	s.inferResourcesStatusHealth(a)
 
-	if !proj.Spec.SyncWindows.Matches(a).CanSync(true) {
+	canSync, err := proj.Spec.SyncWindows.Matches(a).CanSync(true)
+	if err != nil {
+		return a, status.Errorf(codes.PermissionDenied, "cannot sync: invalid sync window: %v", err)
+	}
+	if !canSync {
 		return a, status.Errorf(codes.PermissionDenied, "cannot sync: blocked by sync window")
 	}
 
@@ -2606,10 +2619,17 @@ func (s *Server) GetApplicationSyncWindows(ctx context.Context, q *application.A
 	}
 
 	windows := proj.Spec.SyncWindows.Matches(a)
-	sync := windows.CanSync(true)
+	sync, err := windows.CanSync(true)
+	if err != nil {
+		return nil, fmt.Errorf("invalid sync windows: %w", err)
+	}
 
+	activeWindows, err := windows.Active()
+	if err != nil {
+		return nil, fmt.Errorf("invalid sync windows: %w", err)
+	}
 	res := &application.ApplicationSyncWindowsResponse{
-		ActiveWindows:   convertSyncWindows(windows.Active()),
+		ActiveWindows:   convertSyncWindows(activeWindows),
 		AssignedWindows: convertSyncWindows(windows),
 		CanSync:         &sync,
 	}

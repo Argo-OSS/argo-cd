@@ -175,9 +175,12 @@ const (
 	LabelValueSecretTypeRepository = "repository"
 	// LabelValueSecretTypeRepoCreds indicates a secret type of repository credentials
 	LabelValueSecretTypeRepoCreds = "repo-creds"
+	// LabelValueSecretTypeSCMCreds indicates a secret type of SCM credentials
+	LabelValueSecretTypeSCMCreds = "scm-creds"
 
 	// AnnotationKeyAppInstance is the Argo CD application name is used as the instance name
 	AnnotationKeyAppInstance = "argocd.argoproj.io/tracking-id"
+	AnnotationInstallationID = "argocd.argoproj.io/installation-id"
 
 	// AnnotationCompareOptions is a comma-separated list of options for comparison
 	AnnotationCompareOptions = "argocd.argoproj.io/compare-options"
