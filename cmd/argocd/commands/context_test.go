@@ -76,3 +76,30 @@ func TestContextDelete(t *testing.T) {
 	assert.NotContains(t, localConfig.Users, localconfig.User{AuthToken: "vErrYS3c3tReFRe$hToken", Name: "localhost:8080"})
 	assert.Contains(t, localConfig.Contexts, localconfig.ContextRef{Name: "argocd2.example.com:443", Server: "argocd2.example.com:443", User: "argocd2.example.com:443"})
 }
+
+func TestGetContextDetails(t *testing.T) {
+	// Write the test config file
+	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
+	require.NoError(t, err)
+	defer os.Remove(testConfigFilePath)
+	err = os.Chmod(testConfigFilePath, 0o600)
+	require.NoError(t, err, "Could not change the file permission to 0600 %v", err)
+	localConfig, err := localconfig.ReadLocalConfig(testConfigFilePath)
+	require.NoError(t, err)
+	assert.Equal(t, "localhost:8080", localConfig.CurrentContext)
+	assert.Contains(t, localConfig.Contexts, localconfig.ContextRef{Name: "localhost:8080", Server: "localhost:8080", User: "localhost:8080"})
+
+	// Get a specific ArgoCD Context details
+	output, err := captureOutput(func() error {
+		getContextDetails("argocd1.example.com:443", testConfigFilePath)
+		return nil
+	})
+
+	assert.Contains(t, output, "- SERVERS\n")
+	assert.Contains(t, output, "grpc-web-root-path:")
+	assert.Contains(t, output, "plain-text:")
+	assert.Contains(t, output, "server:")
+	assert.Contains(t, output, "- USERS\n")
+	assert.Contains(t, output, "name:")
+	assert.Contains(t, output, "auth-token:")
+}
