@@ -99,26 +99,26 @@ argocd context cd.argoproj.io --delete`,
 		},
 	}
 
-	// Get context details
-	getDetailsCommand := &cobra.Command{
+	command.AddCommand(listCommand)
+	command.AddCommand(useCommand)
+	command.AddCommand(deleteCommand)
+	command.AddCommand(NewContextGetCommand(clientOpts))
+
+	command.Flags().BoolVar(&deleteFlag, "delete", false, "Delete the context instead of switching to it")
+
+	return command
+}
+
+func NewContextGetCommand(clientOpts *argocdclient.ClientOptions) *cobra.Command {
+	return &cobra.Command{
 		Use:   "get [CONTEXT]",
 		Short: "Get a specific Argo CD context details",
 		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
 			ctxName := args[0]
-
 			getContextDetails(ctxName, clientOpts.ConfigPath)
 		},
 	}
-
-	command.AddCommand(listCommand)
-	command.AddCommand(useCommand)
-	command.AddCommand(deleteCommand)
-	command.AddCommand(getDetailsCommand)
-
-	command.Flags().BoolVar(&deleteFlag, "delete", false, "Delete the context instead of switching to it")
-
-	return command
 }
 
 // Refactored logic for switching Argo CD context
