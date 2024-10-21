@@ -76,3 +76,50 @@ func TestContextDelete(t *testing.T) {
 	assert.NotContains(t, localConfig.Users, localconfig.User{AuthToken: "vErrYS3c3tReFRe$hToken", Name: "localhost:8080"})
 	assert.Contains(t, localConfig.Contexts, localconfig.ContextRef{Name: "argocd2.example.com:443", Server: "argocd2.example.com:443", User: "argocd2.example.com:443"})
 }
+
+func Test_PrintArgocdContexts(t *testing.T) {
+	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
+	require.NoError(t, err)
+	defer os.Remove(testConfigFilePath)
+	err = os.Chmod(testConfigFilePath, 0o600)
+	require.NoError(t, err, "Could not change the file permission to 0600 %v", err)
+
+	str, err := captureOutput(func() error {
+		printArgoCDContexts(testConfigFilePath)
+		return nil
+	})
+	require.NoError(t, err)
+
+	expectedOutput := `CURRENT  NAME                     SERVER
+         argocd1.example.com:443  argocd1.example.com:443
+         argocd2.example.com:443  argocd2.example.com:443
+*        localhost:8080           localhost:8080
+`
+	assert.Equal(t, expectedOutput, str)
+}
+
+// Test for useArgoCDContext
+func TestUseArgoCDContext(t *testing.T) {
+	// Setup test configuration file
+	err := os.WriteFile(testConfigFilePath, []byte(testConfig), os.ModePerm)
+	require.NoError(t, err)
+	defer os.Remove(testConfigFilePath)
+	err = os.Chmod(testConfigFilePath, 0o600)
+	require.NoError(t, err, "Could not change the file permission to 0600 %v", err)
+
+	// Test switching to a different context
+	err = useArgoCDContext("argocd2.example.com:443", testConfigFilePath)
+	require.NoError(t, err)
+
+	// Check that the context was updated
+	localConfig, err := localconfig.ReadLocalConfig(testConfigFilePath)
+	require.NoError(t, err)
+	assert.Equal(t, "argocd2.example.com:443", localConfig.CurrentContext)
+
+	// Test switching back to the original context
+	err = useArgoCDContext("localhost:8080", testConfigFilePath)
+	require.NoError(t, err)
+	localConfig, err = localconfig.ReadLocalConfig(testConfigFilePath)
+	require.NoError(t, err)
+	assert.Equal(t, "localhost:8080", localConfig.CurrentContext)
+}
